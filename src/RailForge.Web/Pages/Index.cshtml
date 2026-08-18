@@ -1,0 +1,509 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "RailForge Studio — Lower Mainland BC GIS & Railway Workstation";
+}
+
+<!-- 1. Visual Studio Title Bar & Menus -->
+<header class="vs-titlebar">
+  <div class="vs-title-left">
+    <div class="vs-app-icon">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#007acc" stroke-width="2.5">
+        <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/>
+        <line x1="4" y1="22" x2="4" y2="15"/>
+      </svg>
+      <span>RailForge Studio</span>
+    </div>
+
+    <nav class="vs-menu-items">
+      <button class="vs-menu-btn">File</button>
+      <button class="vs-menu-btn">Edit</button>
+      <button class="vs-menu-btn">View</button>
+      <button class="vs-menu-btn">Design</button>
+      <button class="vs-menu-btn">DataBC & GIS</button>
+      <button class="vs-menu-btn">Analysis</button>
+      <button class="vs-menu-btn">Tools</button>
+      <button class="vs-menu-btn">Help</button>
+    </nav>
+  </div>
+
+  <div class="vs-project-title">
+    <span>Roberts_Bank_Deltaport_Expansion.rfproj — Lower Mainland BC Workstation (.NET 8 C#)</span>
+  </div>
+
+  <div class="vs-title-right">
+    <button class="vs-menu-btn" id="btn-toggle-left-dock" title="Toggle Project Navigator (Ctrl+Alt+L)">
+      📁 Navigator
+    </button>
+    <button class="vs-menu-btn" id="btn-toggle-right-dock" title="Toggle Properties Window (F4)">
+      ⚙️ Properties
+    </button>
+  </div>
+</header>
+
+<!-- 2. Visual Studio Ribbon Toolbars -->
+<section class="vs-ribbon">
+
+  <!-- Group 1: Project & CAD Deliverables -->
+  <div class="ribbon-group">
+    <div class="ribbon-buttons">
+      <button class="ribbon-btn-large" id="btn-ribbon-save" title="Save Project (Ctrl+S)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+          <polyline points="17 21 17 13 7 13 7 21"/>
+          <polyline points="7 3 7 8 15 8"/>
+        </svg>
+        <span>Save</span>
+      </button>
+
+      <div class="ribbon-stack">
+        <button class="ribbon-btn-small" id="btn-ribbon-export-landxml" title="Export LandXML 1.2 for Autodesk Civil 3D">
+          📄 Export LandXML
+        </button>
+        <button class="ribbon-btn-small" id="btn-ribbon-export-dxf" title="Export AutoCAD DXF Geometry">
+          📐 Export DXF
+        </button>
+      </div>
+    </div>
+    <div class="ribbon-group-title">CAD Deliverables</div>
+  </div>
+
+  <!-- Group 2: Geolocation & Lower Mainland Hubs -->
+  <div class="ribbon-group">
+    <div class="ribbon-buttons">
+      <button class="ribbon-btn-large active" id="btn-ribbon-locate-me" title="Locate My Position (GPS Geolocation)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#007acc" stroke-width="2">
+          <circle cx="12" cy="12" r="7"/>
+          <line x1="12" y1="1" x2="12" y2="4"/>
+          <line x1="12" y1="20" x2="12" y2="23"/>
+          <line x1="1" y1="12" x2="4" y2="12"/>
+          <line x1="20" y1="12" x2="23" y2="12"/>
+        </svg>
+        <span>Locate Me</span>
+      </button>
+
+      <button class="ribbon-btn-large" id="btn-ribbon-toggle-3d" title="Toggle 2D Plan / 3D Terrain Perspective">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+          <polyline points="2 17 12 22 22 17"/>
+          <polyline points="2 12 12 17 22 12"/>
+        </svg>
+        <span id="ribbon-3d-text">3D Terrain</span>
+      </button>
+
+      <div class="ribbon-stack">
+        <select class="ribbon-select" id="ribbon-location-select" title="Jump to Lower Mainland BC Freight Hub">
+          <optgroup label="📍 Lower Mainland British Columbia">
+            <option value="roberts_bank" selected>Roberts Bank Deltaport (BCRC / CN / CPKC)</option>
+            <option value="poco_yard">Port Coquitlam Yard (CPKC Major Yard)</option>
+            <option value="thornton_yard">Thornton Classification Yard (CN Rail)</option>
+            <option value="burrard_inlet">Burrard Port & Grain Elevators (Van/North Van)</option>
+            <option value="brownsville">Brownsville & S. Westminster Spurs (SRY/BNSF)</option>
+          </optgroup>
+          <optgroup label="🌎 Other North American Hubs">
+            <option value="calgary">Calgary Logistics Hub (CPKC / CN, AB)</option>
+            <option value="bailey">Bailey Yard (Union Pacific, NE)</option>
+            <option value="houston">Houston Ship Channel (PTRA/UP, TX)</option>
+          </optgroup>
+        </select>
+
+        <select class="ribbon-select" id="ribbon-basemap-select" title="Switch Base Orthoimagery">
+          <option value="esri-satellite">Esri World Imagery HD (Sub-meter)</option>
+          <option value="databc-ortho">DataBC GeoBC Orthophoto (BC Gov)</option>
+          <option value="usgs-ortho">USGS 3DEP / NAIP Ortho (0.6m)</option>
+          <option value="carto-dark">Carto Vector Dark</option>
+        </select>
+      </div>
+    </div>
+    <div class="ribbon-group-title">Navigation & Lower Mainland</div>
+  </div>
+
+  <!-- Group 3: DataBC, ParcelMap BC & LiDAR Layers -->
+  <div class="ribbon-group">
+    <div class="ribbon-buttons">
+      <button class="ribbon-btn-small active" id="btn-toggle-3d-mesh" title="Toggle 3D Elevation Mesh (1m NRCan HRDEM / Terrarium)">
+        ⛰️ 3D Terrain Mesh
+      </button>
+      <button class="ribbon-btn-small" id="btn-toggle-parcelmap-bc" title="Toggle Official ParcelMap BC Cadastral & Rail Right-of-Way Fabric">
+        🗺️ ParcelMap BC (ROW)
+      </button>
+      <button class="ribbon-btn-small active" id="btn-toggle-rail-overlay" title="Toggle OpenRailwayMap Tracks (CN, CPKC, BNSF, SRY, BCRC)">
+        🚆 BC Rail Network
+      </button>
+    </div>
+    <div class="ribbon-group-title">DataBC & Infrastructure</div>
+  </div>
+
+  <!-- Group 4: Track Design & Turnouts (Placeholders) -->
+  <div class="ribbon-group">
+    <div class="ribbon-buttons">
+      <button class="ribbon-btn-large" id="btn-tool-track" title="Draw Track Centerline (Placeholder)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2v20M2 12h20"/>
+        </svg>
+        <span>Track PI</span>
+      </button>
+      <button class="ribbon-btn-large" id="btn-tool-turnout" title="Snap No. 11 Turnout (CN/CPKC Standard) (Placeholder)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="6" y1="3" x2="6" y2="21"/>
+          <line x1="18" y1="3" x2="18" y2="21"/>
+          <path d="M6 8 L18 16"/>
+        </svg>
+        <span>No. 11 Switch</span>
+      </button>
+      <button class="ribbon-btn-large" id="btn-tool-car-spot" title="Car Spotting Simulator (Placeholder)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="2" y="6" width="20" height="10" rx="2"/>
+          <circle cx="7" cy="18" r="2"/>
+          <circle cx="17" cy="18" r="2"/>
+        </svg>
+        <span>Unit Train</span>
+      </button>
+    </div>
+    <div class="ribbon-group-title">Track & Siding Design</div>
+  </div>
+
+  <!-- Group 5: Civil Grading & Mass Haul (Placeholders) -->
+  <div class="ribbon-group">
+    <div class="ribbon-buttons">
+      <button class="ribbon-btn-large" id="btn-tool-profile" title="Plan & Profile Top of Rail Solver (Placeholder)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 18l6-6 4 4 8-8"/>
+        </svg>
+        <span>Profile</span>
+      </button>
+      <button class="ribbon-btn-large" id="btn-tool-grading" title="Cut/Fill Earthwork Quantities (Placeholder)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="12 2 2 22 22 22"/>
+        </svg>
+        <span>Earthwork</span>
+      </button>
+    </div>
+    <div class="ribbon-group-title">Civil Grading</div>
+  </div>
+
+</section>
+
+<!-- 3. Main Workstation Body with Dockable Panels -->
+<main class="vs-workspace">
+
+  <!-- Left Dock: Project Navigator (Solution Explorer) -->
+  <aside class="vs-dock-panel vs-dock-left" id="dock-left-navigator">
+    <div class="dock-header">
+      <span>Project Navigator</span>
+      <div class="dock-actions">
+        <button class="dock-action-btn" id="btn-pin-left" title="Pin / Unpin Panel">📌</button>
+        <button class="dock-action-btn" id="btn-close-left" title="Collapse Panel (Ctrl+Alt+L)">✕</button>
+      </div>
+    </div>
+
+    <div class="dock-body">
+      <div class="tree-node">
+        <div class="tree-item selected">
+          <span class="tree-item-icon">📁</span>
+          <span style="font-weight:600;">Project 'Roberts_Bank_RBT2'</span>
+        </div>
+
+        <div class="tree-children">
+          <!-- Alignments -->
+          <div class="tree-node">
+            <div class="tree-item">
+              <span class="tree-item-icon">🛤️</span>
+              <span>Alignments (Lower Mainland)</span>
+            </div>
+            <div class="tree-children">
+              <div class="tree-item">
+                <span style="font-size:10px; color:#4ec9b0;">—</span>
+                <span>BCRC Roberts Bank Main Lead</span>
+              </div>
+              <div class="tree-item">
+                <span style="font-size:10px; color:#4fc1ff;">—</span>
+                <span>Deltaport Intermodal Loop Track</span>
+              </div>
+              <div class="tree-item">
+                <span style="font-size:10px; color:#dcdcaa;">—</span>
+                <span>Westshore Coal Unloading Spur</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Turnouts -->
+          <div class="tree-node">
+            <div class="tree-item">
+              <span class="tree-item-icon">🔀</span>
+              <span>Turnouts & Switch Ladders</span>
+            </div>
+            <div class="tree-children">
+              <div class="tree-item">
+                <span>•</span>
+                <span>Switch 01 (No. 11 RH - CN/CPKC Standard)</span>
+              </div>
+              <div class="tree-item">
+                <span>•</span>
+                <span>Switch 02 (No. 15 LH - Mainline Diverge)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Official BC GIS & LiDAR -->
+          <div class="tree-node">
+            <div class="tree-item">
+              <span class="tree-item-icon">⛰️</span>
+              <span>Official BC GIS & LiDAR DEM</span>
+            </div>
+            <div class="tree-children">
+              <div class="tree-item">
+                <span>•</span>
+                <span>DataBC 1m LiDAR DTM (Metro Vancouver)</span>
+              </div>
+              <div class="tree-item">
+                <span>•</span>
+                <span>ParcelMap BC (Cadastral & ROW Fabric)</span>
+              </div>
+              <div class="tree-item">
+                <span>•</span>
+                <span>NRCan CanElevation 1m HRDEM (CGVD2013)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Orthoimagery -->
+          <div class="tree-node">
+            <div class="tree-item">
+              <span class="tree-item-icon">📸</span>
+              <span>High-Resolution Orthophotos</span>
+            </div>
+            <div class="tree-children">
+              <div class="tree-item">
+                <span>•</span>
+                <span>DataBC GeoBC Urban Orthomosaic</span>
+              </div>
+              <div class="tree-item">
+                <span>•</span>
+                <span>Esri Clarity HD (Sub-meter Aerial)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Survey Control Points -->
+          <div class="tree-node">
+            <div class="tree-item">
+              <span class="tree-item-icon">📍</span>
+              <span>BC Geodetic Benchmarks</span>
+            </div>
+            <div class="tree-children">
+              <div class="tree-item">
+                <span>•</span>
+                <span>BCGS 82194 (Elev: 4.12m CGVD2013)</span>
+              </div>
+              <div class="tree-item">
+                <span>•</span>
+                <span>Port Boundary Mon #12 (Delta, BC)</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Center Document Well: GIS Map Canvas -->
+  <section class="vs-document-well">
+    <div id="map-container"></div>
+
+    <!-- Google Maps Style Top-Left Search Card -->
+    <div class="gmap-controls-top-left">
+      <div class="gmap-search-card">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#858585" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input type="text" class="gmap-search-input" id="search-location-input" placeholder="Search Delta, Surrey, PoCo, Vancouver..." />
+      </div>
+    </div>
+
+    <!-- Google Maps Style Bottom-Right Controls -->
+    <div class="gmap-controls-bottom-right">
+      <!-- Geolocation "Locate Me" Button -->
+      <div class="gmap-button-group">
+        <button class="gmap-ctrl-btn" id="btn-gmap-locate" title="Show Your Location in Lower Mainland BC">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="4"/>
+            <path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Zoom In / Zoom Out Controls -->
+      <div class="gmap-button-group">
+        <button class="gmap-ctrl-btn" id="btn-gmap-zoom-in" title="Zoom In (+)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+        </button>
+        <button class="gmap-ctrl-btn" id="btn-gmap-zoom-out" title="Zoom Out (-)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- 2D / 3D & Reset North Controls -->
+      <div class="gmap-button-group">
+        <button class="gmap-ctrl-btn active" id="btn-gmap-3d-toggle" title="Tilt 3D Perspective / 2D Plan">
+          <span style="font-size:11px; font-weight:700;">3D</span>
+        </button>
+        <button class="gmap-ctrl-btn" id="btn-gmap-reset-north" title="Reset North Up">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f14c4c" stroke-width="2">
+            <polygon points="12 2 19 21 12 17 5 21 12 2" fill="#f14c4c"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Right Dock: Properties Window (Object Inspector) -->
+  <aside class="vs-dock-panel vs-dock-right" id="dock-right-properties">
+    <div class="dock-header">
+      <span>Properties</span>
+      <div class="dock-actions">
+        <button class="dock-action-btn" id="btn-pin-right" title="Pin / Unpin Panel">📌</button>
+        <button class="dock-action-btn" id="btn-close-right" title="Collapse Panel (F4)">✕</button>
+      </div>
+    </div>
+
+    <div class="dock-body">
+
+      <!-- Group 1: Cursor Real-Time Readout -->
+      <div class="prop-group">
+        <div class="prop-group-header">🎯 Cursor Live Inspection</div>
+        <div class="prop-row">
+          <span class="prop-name">Latitude</span>
+          <span class="prop-val" id="prop-cur-lat">49.02050° N</span>
+        </div>
+        <div class="prop-row">
+          <span class="prop-name">Longitude</span>
+          <span class="prop-val" id="prop-cur-lng">-123.15500° W</span>
+        </div>
+        <div class="prop-row">
+          <span class="prop-name">Ground Elevation</span>
+          <span class="prop-val highlight" id="prop-cur-elev">13.1 ft</span>
+        </div>
+        <div class="prop-row">
+          <span class="prop-name">Elevation (CGVD2013)</span>
+          <span class="prop-val" id="prop-cur-elev-m">4.0 m</span>
+        </div>
+        <div class="prop-row">
+          <span class="prop-name">Terrain Slope</span>
+          <span class="prop-val green" id="prop-cur-slope">0.25% (Feasible)</span>
+        </div>
+      </div>
+
+      <!-- Group 2: Camera & Map Viewport Properties -->
+      <div class="prop-group">
+        <div class="prop-group-header">📐 Map Viewport State</div>
+        <div class="prop-row">
+          <span class="prop-name">Center Lat/Lng</span>
+          <span class="prop-val" id="prop-cam-center">49.0205, -123.1550</span>
+        </div>
+        <div class="prop-row">
+          <span class="prop-name">Zoom Level</span>
+          <span class="prop-val" id="prop-cam-zoom">15.20</span>
+        </div>
+        <div class="prop-row">
+          <span class="prop-name">Camera Pitch</span>
+          <span class="prop-val" id="prop-cam-pitch">55° (3D Mesh)</span>
+        </div>
+        <div class="prop-row">
+          <span class="prop-name">Camera Bearing</span>
+          <span class="prop-val" id="prop-cam-bearing">330° (NNW)</span>
+        </div>
+      </div>
+
+      <!-- Group 3: Geodesy & BC Datum -->
+      <div class="prop-group">
+        <div class="prop-group-header">🌐 Canadian Geodesy & DataBC</div>
+        <div class="prop-row">
+          <span class="prop-name">Vertical Datum</span>
+          <span class="prop-val">CGVD2013 (BC Std)</span>
+        </div>
+        <div class="prop-row">
+          <span class="prop-name">Horizontal Projection</span>
+          <span class="prop-val">UTM Zone 10N / NAD83</span>
+        </div>
+        <div class="prop-row">
+          <span class="prop-name">Cadastral Source</span>
+          <span class="prop-val">ParcelMap BC (LTSA)</span>
+        </div>
+        <div class="prop-row">
+          <span class="prop-name">LiDAR DEM Source</span>
+          <span class="prop-val">DataBC 1m HRDEM</span>
+        </div>
+      </div>
+
+      <!-- Group 4: Transport Canada & Rail Rules -->
+      <div class="prop-group">
+        <div class="prop-group-header">⚙️ Canadian Rail Standards</div>
+        <div class="prop-row">
+          <span class="prop-name">Standard Ruleset</span>
+          <span class="prop-val">CN_CPKC / TC TSR</span>
+        </div>
+        <div class="prop-row">
+          <span class="prop-name">Max Industrial Curve</span>
+          <span class="prop-val">7.5° (R = 764 ft)</span>
+        </div>
+        <div class="prop-row">
+          <span class="prop-name">Max Storage Grade</span>
+          <span class="prop-val">0.25% (TC Rule)</span>
+        </div>
+        <div class="prop-row">
+          <span class="prop-name">Standard Turnout</span>
+          <span class="prop-val">No. 11 (20 mph)</span>
+        </div>
+      </div>
+
+    </div>
+  </aside>
+
+</main>
+
+<!-- 4. Bottom Visual Studio Status Bar -->
+<footer class="vs-statusbar">
+  <div class="statusbar-group">
+    <div class="statusbar-item">
+      <span>● Ready (Lower Mainland BC)</span>
+    </div>
+    <div class="statusbar-item clickable" id="status-coords">
+      <span>📍 LAT: 49.02050° | LNG: -123.15500°</span>
+    </div>
+    <div class="statusbar-item clickable" id="status-elevation">
+      <span>⛰️ ELEV: 13.1 ft (4.0 m CGVD2013)</span>
+    </div>
+  </div>
+
+  <div class="statusbar-group">
+    <div class="statusbar-item">
+      <span>PROJ: UTM 10N / EPSG:3857</span>
+    </div>
+    <div class="statusbar-item">
+      <span id="status-zoom">ZOOM: 15.20</span>
+    </div>
+    <div class="statusbar-item">
+      <span>TC TSR / CN_CPKC</span>
+    </div>
+    <div class="statusbar-item">
+      <span>UTF-8</span>
+    </div>
+  </div>
+</footer>
+
+<!-- Notification Toast -->
+<div class="vs-toast" id="vs-toast">
+  <span id="toast-message">Ready</span>
+</div>
+
+@section Scripts {
+  <script type="module" src="~/js/app.js" asp-append-version="true"></script>
+}

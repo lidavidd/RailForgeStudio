@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RailForge Studio | Freight Rail Feasibility & Civil GIS Platform</title>
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" />
+  <link rel="stylesheet" href="src/css/app.css" />
+</head>
+<body>
+
+  <!-- Top Application Header -->
+  <header class="app-header">
+    <div class="brand-section">
+      <div class="brand-logo">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/>
+          <line x1="4" y1="22" x2="4" y2="15"/>
+        </svg>
+        <span>RailForge<span style="color:#38bdf8">Studio</span></span>
+      </div>
+      <span class="brand-badge">AEC • Feasibility</span>
+
+      <div class="project-title-box" id="btn-select-preset" title="Switch North American Freight Rail Hub">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8b949e" stroke-width="2">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+          <circle cx="12" cy="10" r="3"/>
+        </svg>
+        <span class="project-name" id="project-name-display">Calgary Logistics Park (CPKC / CN)</span>
+        <span class="badge-tag pulse" id="project-operator-display">CPKC / CN • Alberta</span>
+      </div>
+    </div>
+
+    <div class="header-controls">
+      <!-- Preset Site Quick Selector -->
+      <select class="select-box" id="preset-selector" title="Choose Freight Rail Hub Preset"></select>
+
+      <!-- Standard Ruleset Selector -->
+      <select class="select-box" id="standards-selector" title="Select Governing Rail Engineering Ruleset">
+        <option value="CN_CPKC">CN / CPKC Canadian Guidelines</option>
+        <option value="UP_BNSF">Union Pacific & BNSF Standards</option>
+        <option value="AREMA">AREMA MRE General Practices</option>
+      </select>
+
+      <!-- Unit Toggle -->
+      <button class="btn" id="btn-toggle-units" title="Toggle US Customary vs Metric Units">US (ft, mph)</button>
+
+      <!-- Export Button -->
+      <button class="btn btn-primary" id="btn-open-export" title="Export LandXML for Civil 3D, DXF, or Report">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        Export CAD / Submittal
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Workstation Layout -->
+  <main class="app-main">
+
+    <!-- Left Tool Dock -->
+    <aside class="tool-dock">
+      <button class="tool-btn active" data-tool="pan" title="Pan & Inspect Terrain (Esc)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="m3 3 7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/>
+          <path d="m13 13 6 6"/>
+        </svg>
+      </button>
+
+      <button class="tool-btn" data-tool="draw_track" title="Draw Track Alignment (Click vertices)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2v20M2 12h20M4.93 4.93l14.14 14.14M4.93 19.07l14.14-14.14"/>
+        </svg>
+      </button>
+
+      <button class="tool-btn" data-tool="place_turnout" title="Snap Standard Turnout (#8 - #20)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="6" y1="3" x2="6" y2="21"/>
+          <line x1="18" y1="3" x2="18" y2="21"/>
+          <path d="M6 8 L18 16"/>
+        </svg>
+      </button>
+
+      <button class="tool-btn" data-tool="probe" title="LiDAR Elevation Probe (Click map for elevation)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <circle cx="12" cy="12" r="3"/>
+        </svg>
+      </button>
+
+      <div class="tool-divider"></div>
+
+      <button class="tool-btn" id="btn-undo-vertex" title="Undo Last Vertex (Ctrl+Z)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 7v6h6"/>
+          <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/>
+        </svg>
+      </button>
+
+      <button class="tool-btn" id="btn-clear-track" title="Clear Alignment & Reset">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="3 6 5 6 21 6"/>
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+        </svg>
+      </button>
+    </aside>
+
+    <!-- Center Web-GIS Map Canvas -->
+    <section class="map-viewport">
+      <div id="map-container"></div>
+
+      <!-- Floating Map Top Controls -->
+      <div class="map-top-bar">
+        <div class="floating-pill">
+          <span style="color:#8b949e; font-weight:600;">BASEMAP:</span>
+          <select class="select-box" id="basemap-selector" style="padding:2px 6px; font-size:11px; background:#0d1117;">
+            <option value="satellite">ESRI High-Res Satellite</option>
+            <option value="carto">Carto Vector Dark</option>
+            <option value="topo">USGS Topographic</option>
+          </select>
+
+          <button class="layer-toggle-btn active" id="btn-toggle-rail-overlay" title="Toggle Live North American Rail Network">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/>
+            </svg>
+            Rail Network Overlay
+          </button>
+        </div>
+
+        <div class="floating-pill" id="map-action-hint" style="color:var(--accent-primary); font-weight:500;">
+          Navigate & inspect terrain. Select Draw Track tool to begin layout.
+        </div>
+
+        <div class="floating-pill" id="probe-readout" style="display:none; color:#22c55e;">
+          Probe Active
+        </div>
+      </div>
+    </section>
+
+    <!-- Right Inspector Panel -->
+    <aside class="inspector-panel">
+      <div class="inspector-header">
+        <div class="inspector-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+            <line x1="3" y1="9" x2="21" y2="9"/>
+            <line x1="9" y1="21" x2="9" y2="9"/>
+          </svg>
+          <span>Feasibility Inspector</span>
+        </div>
+        <span class="badge-tag" id="compliance-status-badge">AREMA COMPLIANT</span>
+      </div>
+
+      <nav class="panel-tabs">
+        <button class="tab-btn active" data-tab="geometry">Track Geometry</button>
+        <button class="tab-btn" data-tab="grading">Civil Grading</button>
+        <button class="tab-btn" data-tab="turnouts">Turnouts & Yard</button>
+        <button class="tab-btn" data-tab="checklist">Class I Review</button>
+      </nav>
+
+      <div class="panel-content">
+
+        <!-- Tab 1: Alignment Geometry -->
+        <div class="tab-pane" id="tab-pane-geometry" style="display:flex; flex-direction:column; gap:14px;">
+          <div class="metric-grid">
+            <div class="metric-card">
+              <div class="metric-label">Total Alignment</div>
+              <div class="metric-val highlight" id="metric-total-length">1,850 ft</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Max Deg of Curve</div>
+              <div class="metric-val" id="metric-max-curve">4.2°</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Min Curve Radius</div>
+              <div class="metric-val" id="metric-min-radius">1,364 ft</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Car Spot Capacity</div>
+              <div class="metric-val highlight" id="metric-car-spots">28 spots</div>
+            </div>
+          </div>
+
+          <div style="font-size:11px; color:var(--text-muted);" id="metric-car-details">
+            50' Boxcars: 32 | 60' Hoppers: 28 | 85' Flats: 20
+          </div>
+
+          <div style="border-top:1px solid var(--border-subtle); padding-top:10px;">
+            <div style="font-size:12px; font-weight:700; margin-bottom:8px; color:var(--text-main);">
+              AREMA & Class I Standard Validation
+            </div>
+            <div id="compliance-list"></div>
+          </div>
+        </div>
+
+        <!-- Tab 2: Civil Grading & Earthwork -->
+        <div class="tab-pane" id="tab-pane-grading" style="display:none; flex-direction:column; gap:14px;">
+          <div class="metric-grid">
+            <div class="metric-card">
+              <div class="metric-label">Excavation (Cut)</div>
+              <div class="metric-val" id="metric-cut-vol">1,420 yd³</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Embankment (Fill)</div>
+              <div class="metric-val" id="metric-fill-vol">3,850 yd³</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Ballast Required</div>
+              <div class="metric-val" id="metric-ballast-tons">2,310 tons</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Est. Civil Budget</div>
+              <div class="metric-val highlight" id="metric-civil-cost">$412,000</div>
+            </div>
+          </div>
+
+          <div style="border-top:1px solid var(--border-subtle); padding-top:10px;">
+            <div style="font-size:12px; font-weight:700; margin-bottom:8px; color:var(--text-main);">
+              Roadbed Cross-Section (AREMA Subgrade & Ballast)
+            </div>
+            <div style="height:150px; background:#080b10; border:1px solid var(--border-subtle); border-radius:6px; overflow:hidden;">
+              <canvas id="cross-section-canvas" style="width:100%; height:100%;"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 3: Turnouts & Yard Siding -->
+        <div class="tab-pane" id="tab-pane-turnouts" style="display:none; flex-direction:column; gap:14px;">
+          <div style="background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:8px; padding:12px;">
+            <div style="font-size:12px; font-weight:700; margin-bottom:8px;">Turnout Snapping Config</div>
+            <div style="display:flex; gap:8px; margin-bottom:8px;">
+              <div style="flex:1;">
+                <label style="font-size:10px; color:var(--text-muted); display:block; margin-bottom:2px;">Turnout Size</label>
+                <select class="select-box" id="turnout-num-select" style="width:100%;">
+                  <option value="8">No. 8 (Restricted Yard, 10 mph)</option>
+                  <option value="10">No. 10 (UP/BNSF Standard, 15 mph)</option>
+                  <option value="11" selected>No. 11 (CN/CPKC Standard, 20 mph)</option>
+                  <option value="15">No. 15 (Passing Siding, 30 mph)</option>
+                  <option value="20">No. 20 (High-Speed Main, 50 mph)</option>
+                </select>
+              </div>
+              <div style="width:90px;">
+                <label style="font-size:10px; color:var(--text-muted); display:block; margin-bottom:2px;">Hand</label>
+                <select class="select-box" id="turnout-hand-select" style="width:100%;">
+                  <option value="Right">Right</option>
+                  <option value="Left">Left</option>
+                </select>
+              </div>
+            </div>
+            <div style="font-size:11px; color:var(--text-muted);">
+              Select size, then click "Snap Standard Turnout" tool and click along your track alignment.
+            </div>
+          </div>
+
+          <div style="border-top:1px solid var(--border-subtle); padding-top:10px;">
+            <div style="font-size:12px; font-weight:700; margin-bottom:8px; color:var(--text-main);">
+              Placed Turnouts & Fouling Clearance
+            </div>
+            <div id="turnouts-list"></div>
+          </div>
+        </div>
+
+        <!-- Tab 4: Class I Review Checklist -->
+        <div class="tab-pane" id="tab-pane-checklist" style="display:none; flex-direction:column; gap:12px;">
+          <div style="font-size:12px; font-weight:700; color:var(--text-main);">
+            Class I Railroad Submittal Pre-Flight
+          </div>
+          <div style="font-size:11px; color:var(--text-muted);">
+            Items reviewed by Class I Industrial Development & Chief Engineer before permit approval:
+          </div>
+
+          <div class="rule-card pass">
+            <div class="rule-title" style="color:var(--accent-success);">✅ Fouling Point Clearance</div>
+            <div class="rule-desc">Minimum 14'-0" track center-to-center clearance verified before car storage zone.</div>
+          </div>
+          <div class="rule-card pass">
+            <div class="rule-title" style="color:var(--accent-success);">✅ Storage Track Grade</div>
+            <div class="rule-desc">Car holding track slope is ≤ 0.20% to prevent unbraked runaway cars.</div>
+          </div>
+          <div class="rule-card pass">
+            <div class="rule-title" style="color:var(--accent-success);">✅ Double-Stack Clearance</div>
+            <div class="rule-desc">Plate H (23'-6" above Top of Rail) envelope unobstructed.</div>
+          </div>
+          <div class="rule-card warn">
+            <div class="rule-title" style="color:var(--accent-warning);">⚠️ Derail Device Required</div>
+            <div class="rule-desc">Class I requires a split-switch or sliding derail placed 50' past clearance point to protect mainline.</div>
+          </div>
+        </div>
+
+      </div>
+    </aside>
+
+  </main>
+
+  <!-- Bottom Plan & Profile Drawer -->
+  <section class="profile-drawer">
+    <div class="profile-drawer-header">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span style="font-weight:700; color:var(--text-main);">PLAN & PROFILE (STATION 0+00 TO END)</span>
+        <span>•</span>
+        <span style="color:#58a6ff;">— Proposed Top of Rail (TOR)</span>
+        <span>•</span>
+        <span style="color:#8b949e;">- - Ground Surface (LiDAR DEM)</span>
+        <span>•</span>
+        <span style="color:#e3b341;">■ Cut</span>
+        <span style="color:#3fb950;">■ Fill</span>
+      </div>
+      <div style="font-size:10px; color:var(--text-dim);">
+        Drag blue PVI handles to adjust vertical profile & optimize earthwork balance
+      </div>
+    </div>
+    <div class="profile-canvas-wrapper">
+      <canvas id="profile-canvas"></canvas>
+      <div class="profile-tooltip" id="profile-tooltip"></div>
+    </div>
+  </section>
+
+  <!-- Bottom Status Bar -->
+  <footer class="app-statusbar">
+    <div class="status-group">
+      <span id="statusbar-coords">LAT: 50.98350° | LNG: -113.88200°</span>
+      <span id="statusbar-datum">DATUM: NAVD88 / CGVD2013</span>
+      <span style="color:var(--accent-primary);">DATA: 3DEP / LiDAR Feasibility Mode (±0.5m)</span>
+    </div>
+    <div class="status-group">
+      <span>AREMA MRE Ch. 5</span>
+      <span>RAILFORGE ENGINE v1.0</span>
+    </div>
+  </footer>
+
+  <!-- Export Modal -->
+  <div class="modal-overlay" id="export-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 style="font-size:15px; font-weight:700;">Export Feasibility Deliverables</h3>
+        <button class="btn" id="btn-close-export" style="padding:2px 6px;">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="font-size:12px; color:var(--text-muted); margin-bottom:6px;">
+          Choose an export format to hand off feasibility geometry to Civil 3D, GIS, or railroad reviewers:
+        </div>
+
+        <div class="preset-item" id="btn-export-landxml">
+          <div class="preset-title" style="color:var(--accent-primary);">📄 LandXML 1.2 Alignment & Profile</div>
+          <div class="preset-desc">Direct 1-click import into Autodesk Civil 3D, Bentley OpenRail, or Trimble Business Center. Includes 3D horizontal alignment and vertical TOR profile.</div>
+        </div>
+
+        <div class="preset-item" id="btn-export-dxf">
+          <div class="preset-title" style="color:var(--accent-primary);">📐 AutoCAD DXF Vector Geometry</div>
+          <div class="preset-desc">Standard 2D/3D polyline CAD drawing with track centerlines and turnout geometry.</div>
+        </div>
+
+        <div class="preset-item" id="btn-export-geojson">
+          <div class="preset-title" style="color:var(--accent-primary);">🗺️ GeoJSON GIS Layers</div>
+          <div class="preset-desc">Open directly in Google Earth Pro, QGIS, or ArcGIS Pro for client presentations and environmental mapping.</div>
+        </div>
+
+        <div class="preset-item" id="btn-print-report">
+          <div class="preset-title" style="color:var(--accent-primary);">📑 Printable Feasibility Summary Report</div>
+          <div class="preset-desc">Generates a clean PDF submittal sheet with alignment geometry, car spot capacities, earthwork volumes, and AREMA compliance checklist.</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="document.getElementById('export-modal').style.display='none'">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+  <script type="module" src="src/js/app.js"></script>
+</body>
+</html>
